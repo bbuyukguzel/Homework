@@ -1,0 +1,61 @@
+﻿// I: r1 A: r2 M: r3 N: r4 M/4:r5
+// rx += ry durumuna göre accife ve accifg ye uygun yazdim.
+
+
+movi r6, #0			; sum = 0
+mov  r7, r6			; i = 0
+movi r8, #1			; constant 1
+movi r9, #30 			; constant 30 hlt konumuna atlamak icin
+movi r13, #2			; constant 2
+movi r12, #6			; constant 6 if blogunu atlamak
+movi r14, #-36			; constant -36 loopun basina donebilmek icin
+mov r11, r6			; offset hesaplarken kullanilacak i*2 (short) degeri
+
+
+				; for dongusu i<M oldugu surece calismali
+				; yani 0>i-M kosulu saglanmali. Bu ifade
+				; 2>(i-M)+2 ye denktir. 
+sub r15, r7, r13		; i-M
+add r15, r15, r13		; (i-M)+2
+accifg r0, r13, r15		; kosul saglandigi surece PS+=2 yapilacak
+accife r0, r9, r9 		; Yani bu satir (hlt) pas gecilecek
+
+
+
+add r10, r10, r11		; I[i] hem if hem else icin hesaplaniyor
+
+
+				; (i>M/4) kosulunda else blogu calisacaktir
+				; Bu ifade 0>(M/4-i) 'ye denktir. O da
+				; 2>(M/4-i)+2 'ye denktir.
+sub r15, r5, r7			; M/4-i
+add r15, r15, r13		; (M/4-i)+2
+accifg r0, r13, r15		; else kosulu saglandigi surece PS+=2 
+				; yani alt satiri pas gec
+accife r0, r12, r12 		; PS'ini if blogunun adresine guncelle
+
+
+else:
+				; else blogunu atlayabilmek icin PS+=4 yapmam gerekiyordu
+				; ancak elimde register kalmadığından, (else 2 buyruk, if 3)
+				; yukarida r12'yi kullandım yani 3 buyruk (PS+=6) atlattim. Else'de 
+				; 2 buyruk icerdiginden fazladan bir buyruk eklemem gerekti.
+				; alttaki mov tamamen bu is icin kullanilan dummy bir buyruktur.
+	movi r8, #1		; Dummy buyruk
+	add r10, r2, r10	; A[I[i]]
+	accife r0, r12, r12 	; PS+=6 if blogunu pas gec
+
+if:
+	sub r10, r4, r10	; N - I[i]
+	sub r10, r10, r8	; N - I[i] -1
+	add r10, r2, r10	; A[N - I[i] -1]
+
+add r6, r6, r10			; sum += 
+
+
+add r11, r11, r13 		; offsette kullanilacak i*2 degeri
+add r7, r7, r8			; i += 1
+
+
+accife r0, r14, r14		; return head of loop
+hlt
